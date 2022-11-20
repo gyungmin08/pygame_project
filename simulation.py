@@ -85,7 +85,7 @@ def draw_rocket(part, rot):
     rocket_image = pygame.image.load(rocket[part]["image"])
     rocket_image = pygame.transform.scale(rocket_image, ( int(rocket[part]["diameter"] * 5), int(rocket[part]["length"] * 5)))
     rocket_image = pygame.transform.rotate(rocket_image, rot)
-    screen.blit(rocket_image, ((config.screen_w-rocket["total"]["diameter"]*5)/2, (config.screen_h-rocket["total"]["length"]*5)/2))
+    screen.blit(rocket_image, ((config.screen_w-rocket[part]["diameter"]*5)/2, (config.screen_h-rocket[part]["length"]*5)/2))
 
 
 def draw_info():
@@ -103,6 +103,9 @@ def simulation_screen():
     while True:
         screen.fill(config.WHITE)
         rocket["seconds"] = (pygame.time.get_ticks()-0) / 1000
+        rocket["total"]["altitude"] = cal_altitude(rocket["seconds"])
+        rocket["total"]["velocity"] = cal_velocity(rocket["seconds"])
+        rocket["total"]["acceleration"] = cal_acceleration(rocket["seconds"])
         
         back_button.draw()
         draw_rocket("total", 0)

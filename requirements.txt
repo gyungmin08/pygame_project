@@ -2,3 +2,4 @@
 # pip install -r requirements.txt
 
 pymunk==1.15.1
+sympy==1.11.1
