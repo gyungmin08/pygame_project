@@ -1,11 +1,12 @@
 # Path : play.py
 
 import pygame
+import sympy as sy
 import sys
 
 import tools.button as button
 import tools.config as config
-import menu, build, simulation
+import menu, build, simulation, cal
 
 def init():
     global screen, back_button, rocket
@@ -57,14 +58,16 @@ def init():
             "length": 4.2,  # m
             "diameter": 5.2  # m
         },
-        "total": {
+        "total": {  # 로켓 정보 저장 (김경민)
             "image": "src/image/falcon9_total.png",
+            "angle": 0,  # deg
             "thrust": 16947000,  # N
             "mass": 521970,  # kg
             "length": 59,  # m
             "diameter": 5.2,  # m
             "isp": 311,  # s
             "propellant": 488370,  # kg
+            "enthalpy": 1,  # J
             "burn time": 559,  # s
             "engine_status": True,
 
@@ -75,10 +78,6 @@ def init():
     }
 
     simulation_screen()
-
-
-def calculate():
-    pass
 
 
 def draw_rocket(part, rot):
@@ -92,8 +91,9 @@ def draw_info():
     text = f" \
     seconds: {rocket['seconds']}s \n \
     altitude: {rocket['total']['altitude']}m \n \
-    velocity: {rocket['total']['velocity']}m/s \n \
-    acceleration: {rocket['total']['acceleration']}m/s^2 "
+    angle: {rocket['total']['angle']}deg \n \
+    acceleration: {rocket['total']['acceleration']}m/s^2 \n \
+    mass: {rocket['total']['mass']}kg"
 
     text = pygame.font.Font("src/font/Montserrat-Regular.ttf", 20).render(text, True, config.BLACK)
     screen.blit(text, (0, 0))
@@ -102,10 +102,13 @@ def draw_info():
 def simulation_screen():
     while True:
         screen.fill(config.WHITE)
+        
         rocket["seconds"] = (pygame.time.get_ticks()-0) / 1000
-        rocket["total"]["altitude"] = cal_altitude(rocket["seconds"])
-        rocket["total"]["velocity"] = cal_velocity(rocket["seconds"])
-        rocket["total"]["acceleration"] = cal_acceleration(rocket["seconds"])
+        calculated = cal.calculate(rocket["seconds"], rocket["total"]["thrust"], rocket["total"]["mass"], rocket["total"]["propellant"], rocket["total"]["enthalpy"], rocket["total"]["angle"])
+
+        rocket["total"]["altitude"] = calculated[1]
+        rocket["total"]["mass"] = calculated[2]
+        rocket["total"]["acceleration"] = calculated[3]
         
         back_button.draw()
         draw_rocket("total", 0)
