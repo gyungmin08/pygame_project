@@ -15,8 +15,8 @@ python3 __init__.py
 
 ## 팀원
 | 이름 | 프로필 | 역할 | 세부 역할 |
-| --- | --- | --- |
-| 김경민 | [@gyungmin08](https://github.com/gyungmin08) | 팀장, 프로그래머 | 
-| 정윤서 | [@newton08](https://github.com/newton08) | 프로그래머 |
-| 강민재 |  | 프로그래머 |
-| 주한희 |  | 디자이너 |
+| --- | --- | --- | ---|
+| 김경민 | [@gyungmin08](https://github.com/gyungmin08) | 팀장, 프로그래머 | - |
+| 정윤서 | [@newton08](https://github.com/newton08) | 프로그래머 | - |
+| 강민재 | - | 프로그래머 | - |
+| 주한희 | - | 디자이너 | - |
