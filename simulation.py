@@ -3,6 +3,7 @@
 import pygame
 import sys
 import sympy
+import math
 
 import tools.button as button
 import tools.config as config
@@ -69,6 +70,8 @@ def init():
             "isp": 311,  # s
             "propellant": 488370,  # kg
             "enthalpy": 1,  # J
+            "h": 0,  # m
+            "y": 0,  # m
             "burn time": 559,  # s
             "engine_status": True,
 
@@ -81,7 +84,7 @@ def init():
     simulation_screen()
 
 
-def calculate():  # 윤서
+def calculate(h_, y_):  # 윤서
     global rocket
 
     R = 8.31446261815324
@@ -101,18 +104,17 @@ def calculate():  # 윤서
     acceleration = -9.8 + (F - 0)/m
     velocity = acceleration * time
 
-    # t, theta = sympy.symbols('t theta')
+    h__ = ((-9.8 + (F - 0)/m) *math.cos(math.radians(math.sin(angle)))*600) 
 
-    # h = sympy.integrate(acceleration * sympy.cos(theta) * t ** (2), (t, 0, time))
-    # h = h.subs(t, time).subs(theta, angle).evalf()
+    y__ = ((-9.8 + (F - 0)/m) *sympy.cos(angle)/60)
+    y_ += y__ * time
 
-    # y = sympy.integrate(acceleration * sympy.sin(theta) * t ** (2), (t, 0, time))
-    # y = y.subs(t, time).subs(theta, angle).evalf()
+    t, theta = sympy.symbols('t theta')
 
     if time >= burn_time:
         rocket["total"]["engine_status"] = False
 
-    rocket["total"]["altitude"] = round(velocity * time + 0.5 * acceleration * time**2, 2)
+    rocket["total"]["altitude"] = round(h_ + h__ - 13671.123978070842, 2)
     rocket["total"]["velocity"] = round(velocity, 2)
     rocket["total"]["acceleration"] = round(acceleration, 2)
     rocket["total"]["mass"] = round(m, 2)
@@ -122,7 +124,7 @@ def calculate():  # 윤서
 
 def draw_rocket(part, rot):
     rocket_image = pygame.image.load(rocket[part]["image"])
-    rocket_image = pygame.transform.scale(rocket_image, ( int(rocket[part]["diameter"] * 5), int(rocket[part]["length"] * 5)))
+    rocket_image = pygame.transform.scale(rocket_image, (int(rocket[part]["diameter"] * 5), int(rocket[part]["length"] * 5)))
     rocket_image = pygame.transform.rotate(rocket_image, rot)
     screen.blit(rocket_image, ((config.screen_w-rocket[part]["diameter"]*5)/2, (config.screen_h-rocket[part]["length"]*5)/2))
 
@@ -138,26 +140,31 @@ def simulation_screen():
     while True:
         screen.fill(config.WHITE)
         rocket['total']["seconds"] = (pygame.time.get_ticks()-0) / 1000
-        calculate()
+        calculate(rocket['total']["h"], rocket['total']["y"])
         
         back_button.draw()
-        draw_rocket("total", rocket["total"]["angle"]+90)
+        draw_rocket("total", rocket["total"]["angle"]-90)
         draw_info()
         event_main()
         config.clock.tick(config.FPS)
         pygame.display.update()
 
 
-def event_main():
+def event_main():  # 민재
+    x, y = 0, 0
+
     for event in pygame.event.get():
         back_button.event_handler(event)
 
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        
+        keys=pygame.key.get_pressed()
+        
+        if keys[pygame.K_RIGHT]:
+            x += 1
+        if keys[pygame.K_LEFT]:
+            x -= 1
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                rocket["total"]["angle"] -= 1
-            if event.key == pygame.K_RIGHT:
-                rocket["total"]["angle"] += 1
+        rocket["total"]["angle"] += x
