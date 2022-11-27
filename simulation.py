@@ -1,12 +1,12 @@
 # Path : play.py
 
 import pygame
-import sympy as sy
 import sys
+import sympy
 
 import tools.button as button
 import tools.config as config
-import menu, build, simulation, cal
+import menu, build, simulation
 
 def init():
     global screen, back_button, rocket
@@ -28,7 +28,6 @@ def init():
     rocket = {
         "name": "Falcon 9",
         "stage": 2,
-        "seconds": 0,
 
         "stage1": {
             "image": "src/image/falcon9_stage1.png",
@@ -58,10 +57,12 @@ def init():
             "length": 4.2,  # m
             "diameter": 5.2  # m
         },
-        "total": {  # 로켓 정보 저장 (김경민)
+        "total": {
             "image": "src/image/falcon9_total.png",
-            "angle": 0,  # deg
+            "seconds": 0,  # s
+            "angle": 90,  # deg
             "thrust": 16947000,  # N
+            "original mass": 521970,  # kg
             "mass": 521970,  # kg
             "length": 59,  # m
             "diameter": 5.2,  # m
@@ -80,6 +81,45 @@ def init():
     simulation_screen()
 
 
+def calculate():  # 윤서
+    global rocket
+
+    R = 8.31446261815324
+    F = rocket["total"]["thrust"]
+    original_M = rocket["total"]["original mass"]
+    L = rocket["total"]["propellant"]
+    angle = rocket["total"]["angle"]
+    burn_time = rocket["total"]["burn time"]
+    time = rocket["total"]["seconds"]
+
+    q = L / burn_time
+    m = original_M - time*q
+
+    if m < original_M - L:
+        m = original_M - L
+
+    acceleration = -9.8 + (F - 0)/m
+    velocity = acceleration * time
+
+    # t, theta = sympy.symbols('t theta')
+
+    # h = sympy.integrate(acceleration * sympy.cos(theta) * t ** (2), (t, 0, time))
+    # h = h.subs(t, time).subs(theta, angle).evalf()
+
+    # y = sympy.integrate(acceleration * sympy.sin(theta) * t ** (2), (t, 0, time))
+    # y = y.subs(t, time).subs(theta, angle).evalf()
+
+    if time >= burn_time:
+        rocket["total"]["engine_status"] = False
+
+    rocket["total"]["altitude"] = round(velocity * time + 0.5 * acceleration * time**2, 2)
+    rocket["total"]["velocity"] = round(velocity, 2)
+    rocket["total"]["acceleration"] = round(acceleration, 2)
+    rocket["total"]["mass"] = round(m, 2)
+    rocket["total"]["seconds"] = round(time, 2)
+    rocket["total"]["angle"] = round(angle, 2)
+
+
 def draw_rocket(part, rot):
     rocket_image = pygame.image.load(rocket[part]["image"])
     rocket_image = pygame.transform.scale(rocket_image, ( int(rocket[part]["diameter"] * 5), int(rocket[part]["length"] * 5)))
@@ -88,30 +128,20 @@ def draw_rocket(part, rot):
 
 
 def draw_info():
-    text = f" \
-    seconds: {rocket['seconds']}s \n \
-    altitude: {rocket['total']['altitude']}m \n \
-    angle: {rocket['total']['angle']}deg \n \
-    acceleration: {rocket['total']['acceleration']}m/s^2 \n \
-    mass: {rocket['total']['mass']}kg"
-
-    text = pygame.font.Font("src/font/Montserrat-Regular.ttf", 20).render(text, True, config.BLACK)
-    screen.blit(text, (0, 0))
+    for i in rocket["total"].keys():
+        if i != "image":
+            text = pygame.font.Font("src/font/Montserrat-Regular.ttf", 20).render(f"{i} : {rocket['total'][i]}", True, config.BLACK)
+            screen.blit(text, (10, 40 + 20 * list(rocket["total"].keys()).index(i)))
 
 
-def simulation_screen():
+def simulation_screen():    
     while True:
         screen.fill(config.WHITE)
-        
-        rocket["seconds"] = (pygame.time.get_ticks()-0) / 1000
-        calculated = cal.calculate(rocket["seconds"], rocket["total"]["thrust"], rocket["total"]["mass"], rocket["total"]["propellant"], rocket["total"]["enthalpy"], rocket["total"]["angle"])
-
-        rocket["total"]["altitude"] = calculated[1]
-        rocket["total"]["mass"] = calculated[2]
-        rocket["total"]["acceleration"] = calculated[3]
+        rocket['total']["seconds"] = (pygame.time.get_ticks()-0) / 1000
+        calculate()
         
         back_button.draw()
-        draw_rocket("total", 0)
+        draw_rocket("total", rocket["total"]["angle"]+90)
         draw_info()
         event_main()
         config.clock.tick(config.FPS)
@@ -125,3 +155,9 @@ def event_main():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                rocket["total"]["angle"] -= 1
+            if event.key == pygame.K_RIGHT:
+                rocket["total"]["angle"] += 1
